@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Pop's TV — Virtual Office</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08080f;--bg2:#0d0d1a;--bg3:#13132a;--bg4:#1a1a33;
+  --red:#ff2d4e;--gold:#f9b233;--cyan:#00d4ff;
+  --white:#f0f0f8;--muted:#7777aa;--border:#1a1a35;
+  --success:#10d97e;--warn:#f9b233;--danger:#ff2d4e;--info:#00d4ff;
+  --card:#0d0d1e;--card-border:#1e1e40;
+}
+body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh}
+
+/* ---- LOGIN ---- */
+#login-wrap{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column}
+.login-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(255,45,78,.12),transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(0,212,255,.06),transparent 50%)}
+.login-box{position:relative;background:var(--card);border:1px solid var(--card-border);border-radius:22px;padding:44px 40px;max-width:420px;width:100%;box-shadow:0 0 80px rgba(255,45,78,.1)}
+.login-logo{width:60px;height:60px;background:linear-gradient(135deg,var(--red),#800030);border-radius:16px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:#fff;margin:0 auto 18px}
+.login-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;text-align:center;margin-bottom:4px}
+.login-sub{color:var(--muted);font-size:13px;text-align:center;margin-bottom:28px}
+.login-role-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.role-pill{padding:10px 8px;border:1px solid var(--border);border-radius:10px;text-align:center;cursor:pointer;transition:all .15s;font-size:12px;color:var(--muted)}
+.role-pill:hover{border-color:var(--gold);color:var(--white)}
+.role-pill.selected{border-color:var(--gold);background:rgba(249,178,51,.08);color:var(--gold)}
+.role-pill .role-icon{font-size:20px;margin-bottom:4px}
+.role-pill .role-name{font-weight:600}
+.l-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--white);font-size:14px;outline:none;font-family:'DM Sans',sans-serif;margin-bottom:10px;transition:border-color .2s}
+.l-input:focus{border-color:var(--cyan)}
+.btn-login{width:100%;background:linear-gradient(135deg,var(--red),#aa0028);color:#fff;border:none;border-radius:10px;padding:13px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:4px}
+.btn-login:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(255,45,78,.3)}
+.login-err{background:rgba(255,45,78,.1);border:1px solid rgba(255,45,78,.3);border-radius:8px;padding:9px 13px;font-size:12px;color:var(--danger);margin-bottom:12px;display:none}
+.login-err.show{display:block}
+.admin-manage-link{text-align:center;margin-top:14px;font-size:12px;color:var(--muted)}
+.admin-manage-link a{color:var(--cyan);cursor:pointer}
+
+/* ---- NAV ---- */
+.nav{background:rgba(13,13,26,.97);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:0;position:sticky;top:0;z-index:100;flex-wrap:wrap;backdrop-filter:blur(8px)}
+.nav-brand{display:flex;align-items:center;gap:10px;padding:13px 16px 13px 0;border-right:1px solid var(--border);margin-right:10px;cursor:pointer}
+.nav-logo{width:32px;height:32px;background:linear-gradient(135deg,var(--red),#900030);border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:#fff}
+.nav-brand .name{font-family:'Syne',sans-serif;font-weight:700;font-size:15px}
+.nav-brand .name span{color:var(--gold)}
+.nav-tab{padding:15px 13px;cursor:pointer;font-size:12px;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;font-weight:500}
+.nav-tab:hover{color:var(--white)}
+.nav-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.nav-end{margin-left:auto;display:flex;align-items:center;gap:10px;padding:8px 0}
+.badge{background:var(--danger);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px}
+.warn-badge{background:var(--warn);color:#000;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px}
+.role-tag{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:4px 10px;font-size:11px;color:var(--gold);font-weight:600}
+.logout-btn{background:transparent;border:1px solid var(--border);border-radius:7px;padding:5px 12px;font-size:11px;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif}
+.logout-btn:hover{color:var(--danger);border-color:var(--danger)}
+
+/* ---- LAYOUT ---- */
+.page{padding:22px;max-width:1400px;margin:0 auto;width:100%}
+.section-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:4px}
+.section-sub{color:var(--muted);font-size:13px;margin-bottom:20px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px}
+.grid5{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:12px}
+@media(max-width:1100px){.grid5{grid-template-columns:1fr 1fr 1fr}}
+@media(max-width:900px){.grid4{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:1fr 1fr}.grid5{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.grid2,.grid3,.grid4,.grid5{grid-template-columns:1fr}}
+
+/* ---- CARDS ---- */
+.card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:18px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--white);display:flex;align-items:center;gap:7px}
+.card-title::before{content:'';width:3px;height:12px;background:var(--gold);border-radius:2px}
+.metric-card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:18px;transition:border-color .2s}
+.metric-card:hover{border-color:rgba(249,178,51,.3)}
+.metric-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.metric-value{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--white)}
+.metric-sub{font-size:12px;color:var(--muted);margin-top:4px}
+.metric-sub.up{color:var(--success)}
+.metric-sub.down{color:var(--danger)}
+
+/* ---- BUTTONS ---- */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 15px;border-radius:9px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;font-family:'DM Sans',sans-serif}
+.btn-primary{background:var(--red);color:#fff}.btn-primary:hover{background:#cc0030}
+.btn-gold{background:var(--gold);color:#000}.btn-gold:hover{background:#d9940f}
+.btn-outline{background:transparent;color:var(--white);border:1px solid var(--border)}.btn-outline:hover{background:var(--bg3)}
+.btn-success{background:var(--success);color:#000}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-info{background:var(--info);color:#000}
+.btn-sm{padding:6px 11px;font-size:11px;border-radius:7px}
+.btn-xs{padding:4px 9px;font-size:10px;border-radius:6px}
+
+/* ---- STATUS ---- */
+.status{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.status::before{content:'';width:5px;height:5px;border-radius:50%}
+.s-active{background:rgba(16,217,126,.12);color:var(--success)}.s-active::before{background:var(--success)}
+.s-due{background:rgba(249,178,51,.12);color:var(--warn)}.s-due::before{background:var(--warn)}
+.s-overdue{background:rgba(255,45,78,.12);color:var(--danger)}.s-overdue::before{background:var(--danger)}
+.s-suspended{background:rgba(119,119,170,.12);color:var(--muted)}.s-suspended::before{background:var(--muted)}
+
+/* ---- TABLE ---- */
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--card-border)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead{background:var(--bg3)}
+th{padding:11px 13px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;border-bottom:1px solid var(--border);font-weight:600}
+td{padding:9px 13px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(249,178,51,.02)}
+
+/* ---- FORMS ---- */
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.form-input,.form-select,.form-textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--white);font-size:13px;outline:none;transition:border-color .15s;font-family:'DM Sans',sans-serif}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--gold);box-shadow:0 0 0 2px rgba(249,178,51,.08)}
+.form-select option{background:var(--bg3)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.form-row{grid-template-columns:1fr}}
+
+/* ---- MODAL ---- */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:600px;max-height:92vh;overflow-y:auto}
+.modal-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700}
+.modal-body{padding:22px}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
+.close-btn{width:28px;height:28px;background:var(--bg3);border:none;border-radius:6px;color:var(--muted);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.close-btn:hover{color:var(--white)}
+
+/* ---- TABS ---- */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:18px;overflow-x:auto}
+.tab{padding:9px 15px;cursor:pointer;font-size:12px;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s}
+.tab:hover{color:var(--white)}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+
+/* ---- SEARCH ---- */
+.search-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.search-input{flex:1;min-width:200px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--white);font-size:13px;outline:none;font-family:'DM Sans',sans-serif}
+.search-input:focus{border-color:var(--gold)}
+
+/* ---- MISC ---- */
+.notif{position:fixed;top:20px;right:20px;background:var(--bg2);border:1px solid var(--success);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--success);z-index:999;animation:slideIn .3s ease;max-width:320px}
+@keyframes slideIn{from{transform:translateX(120%)}to{transform:translateX(0)}}
+.notif.error{border-color:var(--danger);color:var(--danger)}
+.notif.info{border-color:var(--info);color:var(--info)}
+.notif.warn{border-color:var(--warn);color:var(--warn)}
+.sms-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:15px}
+.sms-card .sms-type{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--gold);margin-bottom:7px;font-weight:700}
+.sms-card .sms-body{font-size:13px;color:var(--muted);line-height:1.6;background:var(--bg4);padding:11px;border-radius:8px;border-left:3px solid var(--gold);margin-bottom:9px;white-space:pre-line}
+.steps{display:flex;align-items:center;gap:0;margin-bottom:24px;overflow-x:auto;padding-bottom:4px}
+.step{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.step-num{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--muted);flex-shrink:0}
+.step-num.active{border-color:var(--gold);color:var(--gold);background:rgba(249,178,51,.1)}
+.step-num.done{border-color:var(--success);background:var(--success);color:#000}
+.step-label{font-size:12px;color:var(--muted);white-space:nowrap}
+.step-label.active{color:var(--white);font-weight:600}
+.step-line{width:20px;height:2px;background:var(--border);flex-shrink:0;margin:0 3px}
+.step-line.done{background:var(--success)}
+.avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.bar-chart{display:flex;flex-direction:column;gap:9px}
+.bar-row{display:flex;align-items:center;gap:9px}
+.bar-label{width:80px;font-size:12px;color:var(--muted);text-align:right;flex-shrink:0}
+.bar-track{flex:1;background:var(--bg3);border-radius:4px;height:20px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding:0 7px;font-size:11px;font-weight:700;transition:width .6s}
+.bar-val{font-size:12px;color:var(--muted);min-width:38px;text-align:right;flex-shrink:0}
+.dispatch-card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:16px;display:flex;gap:14px;align-items:flex-start}
+.dispatch-card.assigned{border-color:var(--info)}
+.dispatch-card.completed{border-color:var(--success)}
+.dispatch-card.pending{border-color:var(--warn)}
+.howto-card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .2s,border-color .2s;margin-bottom:12px}
+.howto-card:hover{border-color:var(--gold)}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--border);border-radius:11px;transition:.2s}
+.toggle-slider:before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.toggle input:checked+.toggle-slider{background:var(--success)}
+.toggle input:checked+.toggle-slider:before{transform:translateX(18px)}
+.pricing-card{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:22px;text-align:center;cursor:pointer;transition:all .2s}
+.pricing-card:hover{transform:translateY(-3px)}
+.pricing-card.selected{border-color:var(--gold);border-width:2px;background:rgba(249,178,51,.04)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.portal-link-card{background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.2);border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .2s;margin-bottom:10px}
+.portal-link-card:hover{background:rgba(0,212,255,.1);border-color:var(--cyan)}
+.credential-box{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:13px;font-family:monospace}
+.credential-box .cred-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;font-family:'DM Sans',sans-serif}
+.credential-box .cred-value{font-size:16px;font-weight:700;color:var(--gold)}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="login-wrap">
+  <div class="login-bg"></div>
+  <div class="login-box">
+    <div class="login-logo">P</div>
+    <div class="login-title">Pop's TV Office</div>
+    <div class="login-sub">Internal staff portal — select your role to continue</div>
+
+    <div class="login-err" id="login-err">Incorrect username or password.</div>
+
+    <div class="form-label" style="margin-bottom:8px;text-align:center">Select Role</div>
+    <div class="login-role-grid" id="role-grid">
+      <div class="role-pill" data-role="admin" onclick="selectRole('admin')"><div class="role-icon">👑</div><div class="role-name">Admin</div></div>
+      <div class="role-pill" data-role="finance" onclick="selectRole('finance')"><div class="role-icon">💰</div><div class="role-name">Finance</div></div>
+      <div class="role-pill" data-role="field" onclick="selectRole('field')"><div class="role-icon">🚗</div><div class="role-name">Field Tech</div></div>
+      <div class="role-pill" data-role="programmer" onclick="selectRole('programmer')"><div class="role-icon">💻</div><div class="role-name">Programmer</div></div>
+    </div>
+
+    <input class="l-input" id="login-user" placeholder="Username" autocomplete="off">
+    <input class="l-input" id="login-pass" placeholder="Password" type="password" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn-login" onclick="doLogin()">Access Office →</button>
+
+    <div class="admin-manage-link">Admin only: <a onclick="openManageLogins()">Manage user logins</a></div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app" style="display:none">
+  <nav class="nav" id="main-nav"></nav>
+  <div id="main-content"></div>
+</div>
+
+<script>
+// ============================================================
+// AUTH / ROLES
+// ============================================================
+const ROLE_ACCESS = {
+  admin:      ['dashboard','customers','callcenter','dispatch','portal','logins'],
+  finance:    ['dashboard','customers'],
+  field:      ['dispatch'],
+  programmer: ['portal','customers'],
+};
+
+let OFFICE_USERS = [
+  {id:1,username:'admin',password:'pops2024',role:'admin',name:'Admin'},
+  {id:2,username:'finance1',password:'finance123',role:'finance',name:'Finance User'},
+  {id:3,username:'tech1',password:'field123',role:'field',name:'Marcus T.'},
+  {id:4,username:'dev1',password:'dev123',role:'programmer',name:'Dev User'},
+];
+
+let SESSION = null;
+
+function selectRole(role){
+  document.querySelectorAll('.role-pill').forEach(p=>p.classList.remove('selected'));
+  document.querySelector(`[data-role="${role}"]`).classList.add('selected');
+  APP.loginRole = role;
+}
+
+function doLogin(){
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value;
+  const err = document.getElementById('login-err');
+  const match = OFFICE_USERS.find(x=>x.username===u && x.password===p);
+  if(!match){ err.classList.add('show'); return; }
+  err.classList.remove('show');
+  SESSION = match;
+  document.getElementById('login-wrap').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  APP.page = ROLE_ACCESS[SESSION.role][0];
+  renderApp();
+}
+
+function doLogout(){
+  SESSION = null;
+  APP.page = 'dashboard';
+  document.getElementById('login-wrap').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
+
+function canAccess(tab){
+  if(!SESSION) return false;
+  return ROLE_ACCESS[SESSION.role].includes(tab);
+}
+
+function openManageLogins(){
+  if(!SESSION || SESSION.role !== 'admin'){ showNotif('Admin access required','error'); return; }
+  APP.modal = {type:'manageLogins'};
+  renderApp();
+}
+
+// ============================================================
+// DATA
+// ============================================================
+const CUSTOMERS = [
+  {id:1,uid:2991126,username:'Jeza1291',phone:'(972) 670-7582',expiry:'2026-01-21',status:'overdue',name:'Jeza1291',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:2,uid:2967786,username:'Carey721',phone:'(716) 981-0142',expiry:'2026-01-22',status:'overdue',name:'Carey721',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:3,uid:2962174,username:'Bigbop716',phone:'(716) 936-9854',expiry:'2026-01-23',status:'overdue',name:'Bigbop716',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:4,uid:2962283,username:'Harley18',phone:'(716) 936-0861',expiry:'2026-01-30',status:'overdue',name:'Harley18',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:5,uid:2970301,username:'lasharee52',phone:'(716) 935-9360',expiry:'2026-02-05',status:'overdue',name:'lasharee52',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:44,uid:2850150,username:'Stagename445',phone:'(716) 339-8839',expiry:'2026-04-19',status:'due',name:'Stagename445',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:45,uid:2732108,username:'Lastcall888',phone:'(716) 339-8839',expiry:'2026-04-19',status:'due',name:'Lastcall888',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:46,uid:2886490,username:'Yolanda1232',phone:'(716) 361-3331',expiry:'2026-04-20',status:'due',name:'Yolanda1232',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:47,uid:2945642,username:'Ice123456',phone:'(716) 370-4111',expiry:'2026-04-20',status:'due',name:'Ice123456',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:48,uid:2588624,username:'Kirapeter1',phone:'(716) 370-4563',expiry:'2026-04-26',status:'due',name:'Kirapeter1',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:49,uid:2945963,username:'Vell0121',phone:'(716) 381-2881',expiry:'2026-04-29',status:'active',name:'Vell0121',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:50,uid:2926569,username:'Dom032504',phone:'(716) 382-9877',expiry:'2026-04-30',status:'active',name:'Dom032504',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:51,uid:2273795,username:'Trese525',phone:'(716) 392-8036',expiry:'2026-05-05',status:'active',name:'Trese525',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:52,uid:2393699,username:'greatestmom716',phone:'(716) 400-4330',expiry:'2026-05-06',status:'active',name:'greatestmom716',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:53,uid:2865660,username:'Rachelle84',phone:'(716) 431-0240',expiry:'2026-05-06',status:'active',name:'Rachelle84',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:54,uid:2924799,username:'Larry719',phone:'(716) 438-6947',expiry:'2026-05-08',status:'active',name:'Larry719',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:60,uid:2928586,username:'Rickelle716',phone:'(716) 515-5002',expiry:'2026-05-15',status:'active',name:'Rickelle716',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:65,uid:2180187,username:'candy711bills',phone:'(716) 544-6828',expiry:'2026-06-12',status:'active',name:'candy711bills',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:70,uid:2903642,username:'Mille618',phone:'(716) 563-9239',expiry:'2026-06-23',status:'active',name:'Mille618',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:80,uid:2865501,username:'Zoezoe70',phone:'(716) 605-6968',expiry:'2026-09-10',status:'active',name:'Zoezoe70',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:90,uid:2724210,username:'Rubyj1310',phone:'(716) 866-9175',expiry:'2026-12-05',status:'active',name:'Rubyj1310',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:95,uid:2771706,username:'Reggie716',phone:'(716) 939-9119',expiry:'2027-03-12',status:'active',name:'Reggie716',device:'Firestick',plan:'Monthly',notes:'',address:''},
+  {id:100,uid:1476056,username:'Britei02',phone:'(980) 318-6627',expiry:'2027-05-01',status:'active',name:'Britei02',device:'Firestick',plan:'Monthly',notes:'',address:''},
+];
+let customers = [...CUSTOMERS];
+
+const PLANS = [
+  {name:'Monthly',price:25,days:30},
+  {name:'Quarterly',price:65,days:90},
+  {name:'6-Month',price:120,days:180},
+  {name:'Annual',price:220,days:365},
+];
+
+let DISPATCH_ORDERS = [
+  {id:'D001',customer:'Ashley',phone:'7162925200',address:'Buffalo, NY 14215',type:'New Install',device:'ONN Stick + Setup',tech:'Marcus T.',status:'assigned',scheduled:'Today 2PM',notes:'First time customer'},
+  {id:'D002',customer:'Nelson',phone:'7163351529',address:'Buffalo, NY 14207',type:'Setup Help',device:'Firestick',tech:'',status:'pending',scheduled:'Tomorrow 11AM',notes:'Trouble with filter refresh'},
+  {id:'D003',customer:'Corinne',phone:'7163162149',address:'Buffalo, NY 14208',type:'Device Delivery',device:'ONN 4K Stick',tech:'Jayla R.',status:'completed',scheduled:'Yesterday',notes:'Delivered and setup done'},
+];
+
+const FIELD_TECHS = [
+  {id:1,name:'Marcus T.',phone:'(716) 430-0001',active:3,completed:12,status:'on-route'},
+  {id:2,name:'Jayla R.',phone:'(716) 430-0002',active:1,completed:8,status:'available'},
+  {id:3,name:'Devon K.',phone:'(716) 430-0003',active:0,completed:5,status:'off-duty'},
+];
+
+const ORDER_ITEMS = [
+  {id:'onn4k',name:'ONN 4K Streaming Stick',sku:'ONN-4K-001',price:49.99,stock:12,img:'📺'},
+  {id:'onnhd',name:'ONN HD Streaming Stick',sku:'ONN-HD-001',price:29.99,stock:8,img:'📡'},
+  {id:'hdmi',name:'HDMI Extender Cable',sku:'HDMI-EXT-1',price:5.99,stock:30,img:'🔌'},
+  {id:'bundle',name:'Complete Bundle (Stick + Sub)',sku:'BUNDLE-MO-1',price:64.99,stock:5,img:'📦'},
+];
+
+const SMS_TEMPLATES = [
+  {type:'New Customer Welcome',body:"Welcome to Pop's TV! 📺 Your service is LIVE!\n\nUsername: [USERNAME]\nPassword: [PASSWORD]\n\nDownload: IPTV Smarters Pro\nReply HELP if you need setup assistance."},
+  {type:'Payment Reminder (7 days)',body:"⚠️ Reminder: Your Pop's TV subscription expires [DATE].\n\nPlease send payment to avoid interruption.\nCash App: $PopsTVStream\nReply HELP for assistance."},
+  {type:'Expired Service Notice',body:"Your Pop's TV service expired on [DATE].\n\nSend payment to reactivate:\nCash App: $PopsTVStream\n\nWe'd love to have you back! 📺"},
+  {type:'Payment Confirmed',body:"✅ Payment received! Your Pop's TV is extended until [DATE].\n\nEnjoy streaming! 🎉"},
+  {type:'Setup Instructions',body:"To set up Pop's TV:\n1. Download \"IPTV Smarters Pro\"\n2. Tap \"Login with Xtream Codes API\"\n3. Enter: Username [USERNAME] / Password [PASSWORD]\n4. Server: popstv.stream:8080\n\nReply HELP if you need help!"},
+  {type:'Filter/Refresh Update',body:"📢 Pop's TV Update: Please refresh your channel list.\n\nOpen IPTV Smarters → Settings → Update Channels\n\nThis fixes any missing channels. Reply HELP if needed."},
+  {type:'Outage / Maintenance',body:"⚠️ Pop's TV: Temporary service interruption. Our team is working on it now. Service will be restored shortly."},
+];
+
+const VOICE_SCRIPTS = [
+  {type:'Payment Reminder',script:"Hello, this is Pop's TV calling with a friendly reminder that your streaming subscription expires on [DATE]. Please send payment to avoid interruption. Cash App: $PopsTVStream. Text us for help. Thank you!"},
+  {type:'Welcome Call',script:"Hello, welcome to Pop's TV! Your account is now active. If you need help setting up your device, just text us and we'll walk you through everything step by step. Thanks for choosing Pop's TV!"},
+  {type:'Overdue Account',script:"Hello, this is Pop's TV. Your account is past due and service may be interrupted. Please submit payment to reactivate. Cash App: $PopsTVStream. Text us if you have questions. Thank you."},
+  {type:'Service Update',script:"Hello, this is Pop's TV. We've updated our servers for a better experience. Please open IPTV Smarters, go to Settings, and tap Update Channels. Takes about a minute. Text us for help. Thank you!"},
+];
+
+const HOWTO_GUIDES = {
+  firestick:[
+    {title:'Download IPTV Smarters Pro',icon:'📥',time:'2 min',steps:["On your Firestick, go to the Search bar","Type \"IPTV Smarters Pro\"","Select the app and click Get or Download","Wait for it to install","Open the app when done"]},
+    {title:'Login with Your Credentials',icon:'🔑',time:'3 min',steps:["Open IPTV Smarters Pro","Tap \"Login with Xtream Codes API\"","Enter your Username and Password exactly as provided","For URL type: popstv.stream:8080","Tap \"Add User\" — your channels will load"]},
+    {title:'Filter Refresh / Channel Update',icon:'🔄',time:'2 min',steps:["Open IPTV Smarters Pro","Tap the Settings gear icon","Tap \"Update All Channels / EPG\"","Wait for the refresh to complete","Return to Live TV — channels should be updated"]},
+    {title:'Troubleshooting Buffering',icon:'⚡',time:'5 min',steps:["Restart your internet router (unplug 30 seconds)","On Firestick: Settings → My Fire TV → Restart","Clear app cache: Settings → Applications → IPTV Smarters → Clear Cache","Check if other streaming (Netflix) works fine","If only Pop's TV buffers, contact support via text"]},
+  ],
+  onn:[
+    {title:'Initial ONN Stick Setup',icon:'📦',time:'5 min',steps:["Plug ONN stick into TV HDMI port","Plug power USB into wall adapter","Switch TV input to correct HDMI port","Follow on-screen Android TV setup","Connect to your WiFi network"]},
+    {title:'Install IPTV Smarters on ONN',icon:'📥',time:'3 min',steps:["On home screen, find Google Play Store","Search \"IPTV Smarters Pro\"","Select app and tap Install","Once installed, open the app","Follow same login steps as Firestick"]},
+  ],
+  android:[
+    {title:'Install from Play Store',icon:'📱',time:'2 min',steps:["Open Google Play Store","Search \"IPTV Smarters Pro\"","Tap Install","Open app and login with your credentials"]},
+  ],
+};
+
+// ============================================================
+// STATE
+// ============================================================
+const APP = {
+  page: 'dashboard',
+  modal: null,
+  loginRole: null,
+  search: '',
+  filterStatus: 'all',
+  selectedCustomer: null,
+  smsTab: 'templates',
+  dispatchTab: 'orders',
+  howtoTab: 'firestick',
+  onboardStep: 1,
+  newCustomer: {},
+};
+
+// ============================================================
+// UTILS
+// ============================================================
+function getInitials(n){return(n||'?').split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2)}
+function avatarColor(n){const c=['#ff2d4e','#f9b233','#10d97e','#00d4ff','#7c3aed','#f59e0b'];let h=0;for(let i=0;i<(n||'').length;i++)h=(h*31+(n||'').charCodeAt(i))%c.length;return c[h]}
+function fmtPhone(p){const d=p.replace(/\D/g,'');if(d.length===10)return`(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;return p}
+function fmtDate(d){if(!d)return'—';try{const[y,m,dy]=d.split('-');return`${m}/${dy}/${y}`}catch(e){return d}}
+function daysUntil(d){if(!d)return null;const diff=new Date(d)-new Date();return Math.ceil(diff/(1000*60*60*24))}
+function addDays(days){const d=new Date();d.setDate(d.getDate()+days);return d.toISOString().split('T')[0]}
+function genUsername(name,phone){const f=(name||'User').split(' ')[0];const dig=(phone||'').replace(/\D/g,'').slice(-4);return f.charAt(0).toUpperCase()+f.slice(1).toLowerCase()+dig}
+function genPassword(phone){return(phone||'').replace(/\D/g,'')}
+
+let _notifT;
+function showNotif(msg,type='success'){
+  if(_notifT)clearTimeout(_notifT);
+  const old=document.querySelector('.notif');if(old)old.remove();
+  const el=document.createElement('div');
+  el.className=`notif${type!=='success'?' '+type:''}`;
+  el.textContent=msg;document.body.appendChild(el);
+  _notifT=setTimeout(()=>el.remove(),4000);
+}
+
+function getStats(){
+  const total=customers.length;
+  const active=customers.filter(c=>c.status==='active').length;
+  const due=customers.filter(c=>c.status==='due').length;
+  const overdue=customers.filter(c=>c.status==='overdue').length;
+  const rev={'Monthly':25,'Quarterly':65/3,'6-Month':120/6,'Annual':220/12};
+  const monthRev=customers.filter(c=>c.status==='active').reduce((a,c)=>a+(rev[c.plan]||0),0);
+  const exp7=customers.filter(c=>{const d=daysUntil(c.expiry);return d!==null&&d>=0&&d<=7}).length;
+  const exp30=customers.filter(c=>{const d=daysUntil(c.expiry);return d!==null&&d>7&&d<=30}).length;
+  return{total,active,due,overdue,monthRev,exp7,exp30};
+}
+
+function statusBadge(s){
+  const m={active:'Active',due:'Due Soon',overdue:'Overdue',suspended:'Suspended'};
+  return`<span class="status s-${s||'suspended'}">${m[s]||s}</span>`;
+}
+
+// ============================================================
+// RENDER ENGINE
+// ============================================================
+function renderApp(){
+  if(!SESSION){return;}
+  document.getElementById('main-nav').innerHTML = renderNav();
+  document.getElementById('main-content').innerHTML = renderPage() + (APP.modal?renderModal():'');
+  attachListeners();
+}
+
+function renderNav(){
+  const tabs = [
+    {id:'dashboard',label:'📊 Dashboard',roles:['admin','finance']},
+    {id:'customers',label:'👥 Customers',roles:['admin','finance','programmer']},
+    {id:'callcenter',label:'📞 Call Center',roles:['admin']},
+    {id:'dispatch',label:'🚗 Dispatch & Field',roles:['admin','field']},
+    {id:'portal',label:'🔗 Portal Connection',roles:['admin','programmer']},
+    {id:'logins',label:'🔐 Manage Logins',roles:['admin']},
+  ].filter(t=>canAccess(t.id));
+  const s=getStats();
+  return`
+    <div class="nav-brand" onclick="nav('${tabs[0]?.id||'dashboard'}')">
+      <div class="nav-logo">P</div>
+      <div class="name">Pop's <span>TV</span> <span style="font-size:10px;color:var(--muted);margin-left:4px">Office</span></div>
+    </div>
+    ${tabs.map(t=>`<div class="nav-tab${APP.page===t.id?' active':''}" onclick="nav('${t.id}')">${t.label}</div>`).join('')}
+    <div class="nav-end">
+      ${s.overdue>0?`<span class="badge">${s.overdue} Overdue</span>`:''}
+      ${s.due>0?`<span class="warn-badge">${s.due} Due</span>`:''}
+      <span class="role-tag">${SESSION.name} · ${SESSION.role}</span>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+    </div>`;
+}
+
+function renderPage(){
+  if(APP.page==='dashboard') return renderDashboard();
+  if(APP.page==='customers') return renderCustomers();
+  if(APP.page==='callcenter') return renderCallCenter();
+  if(APP.page==='dispatch') return renderDispatch();
+  if(APP.page==='portal') return renderPortalConnection();
+  if(APP.page==='logins') return renderLogins();
+  return renderDashboard();
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard(){
+  const s=getStats();
+  const overdue=customers.filter(c=>c.status==='overdue');
+  const exp7=customers.filter(c=>{const d=daysUntil(c.expiry);return d!==null&&d>=0&&d<=7});
+  return`<div class="page">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:10px">
+      <div class="section-title">📊 Dashboard</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="exportCSV()">📤 Export CSV</button>
+        <button class="btn btn-primary btn-sm" onclick="nav('customers');setTimeout(()=>openAddCustomer(),50)">+ Add Customer</button>
+        <button class="btn btn-gold btn-sm" onclick="APP.modal={type:'massAdd'};renderApp()">⬆️ Mass Add</button>
+      </div>
+    </div>
+    <div class="section-sub">Pop's TV business overview — ${customers.length} total subscribers</div>
+
+    <div class="grid5" style="margin-bottom:16px">
+      <div class="metric-card"><div class="metric-label">Total Customers</div><div class="metric-value">${s.total}</div><div class="metric-sub">All subscribers</div></div>
+      <div class="metric-card"><div class="metric-label">Active</div><div class="metric-value" style="color:var(--success)">${s.active}</div><div class="metric-sub up">${Math.round(s.active/s.total*100)}% of total</div></div>
+      <div class="metric-card"><div class="metric-label">Due Soon</div><div class="metric-value" style="color:var(--warn)">${s.due}</div><div class="metric-sub down">Pay within 30d</div></div>
+      <div class="metric-card"><div class="metric-label">Overdue</div><div class="metric-value" style="color:var(--danger)">${s.overdue}</div><div class="metric-sub down">Needs action</div></div>
+      <div class="metric-card"><div class="metric-label">Est. Monthly Rev</div><div class="metric-value" style="color:var(--gold)">$${Math.round(s.monthRev)}</div><div class="metric-sub up">Active only</div></div>
+    </div>
+
+    <div class="grid2" style="margin-bottom:16px">
+      <div class="card">
+        <div class="card-header"><div class="card-title">⚠️ Expiring in 7 Days (${exp7.length})</div><button class="btn btn-primary btn-sm" onclick="showNotif('Bulk SMS queued for '+${exp7.length}+' customers')">📨 Text All</button></div>
+        ${exp7.length===0?'<div style="color:var(--muted);font-size:13px">None expiring this week 👍</div>':
+        exp7.slice(0,6).map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:9px">
+            <div class="avatar" style="background:${avatarColor(c.name)};width:28px;height:28px;font-size:10px">${getInitials(c.name)}</div>
+            <div><div style="font-weight:600;font-size:12px">${c.name}</div><div style="font-size:11px;color:var(--muted)">${fmtPhone(c.phone)}</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <span style="font-size:11px;color:var(--warn)">${daysUntil(c.expiry)}d left</span>
+            <button class="btn btn-outline btn-sm" onclick="APP.modal={type:'sms',customerId:${c.id}};renderApp()">Text</button>
+          </div>
+        </div>`).join('')}
+        ${exp7.length>6?`<div style="font-size:11px;color:var(--muted);margin-top:6px">+${exp7.length-6} more</div>`:''}
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">🔴 Overdue (${overdue.length})</div><button class="btn btn-danger btn-sm" onclick="showNotif('Bulk SMS queued for '+${overdue.length}+' overdue')">📨 Text All Overdue</button></div>
+        ${overdue.slice(0,6).map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:9px">
+            <div class="avatar" style="background:${avatarColor(c.name)};width:28px;height:28px;font-size:10px">${getInitials(c.name)}</div>
+            <div><div style="font-weight:600;font-size:12px">${c.name}</div><div style="font-size:11px;color:var(--muted)">${fmtPhone(c.phone)}</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:5px">
+            <span style="font-size:11px;color:var(--danger)">${Math.abs(daysUntil(c.expiry))}d ago</span>
+            <button class="btn btn-success btn-sm" onclick="reactivate(${c.id})">✅ Paid</button>
+            <button class="btn btn-outline btn-sm" onclick="APP.modal={type:'sms',customerId:${c.id}};renderApp()">Text</button>
+          </div>
+        </div>`).join('')}
+        ${overdue.length>6?`<div style="font-size:11px;color:var(--muted);margin-top:6px">+${overdue.length-6} more — <span style="color:var(--gold);cursor:pointer" onclick="APP.filterStatus='overdue';nav('customers')">View all</span></div>`:''}
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Status Breakdown</div></div>
+        <div class="bar-chart">
+          <div class="bar-row"><div class="bar-label">Active</div><div class="bar-track"><div class="bar-fill" style="width:${s.active/s.total*100}%;background:var(--success)">${s.active}</div></div><div class="bar-val">${Math.round(s.active/s.total*100)}%</div></div>
+          <div class="bar-row"><div class="bar-label">Due Soon</div><div class="bar-track"><div class="bar-fill" style="width:${s.due/s.total*100}%;background:var(--warn)">${s.due}</div></div><div class="bar-val">${Math.round(s.due/s.total*100)}%</div></div>
+          <div class="bar-row"><div class="bar-label">Overdue</div><div class="bar-track"><div class="bar-fill" style="width:${s.overdue/s.total*100}%;background:var(--danger)">${s.overdue}</div></div><div class="bar-val">${Math.round(s.overdue/s.total*100)}%</div></div>
+        </div>
+        <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="showNotif('SMS queued for all overdue customers')">📨 Text Overdue</button>
+          <button class="btn btn-outline btn-sm" onclick="showNotif('SMS queued for due-soon customers')">📨 Text Due Soon</button>
+          <button class="btn btn-outline btn-sm" onclick="nav('callcenter')">All Templates</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Quick Actions</div></div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-primary" style="justify-content:flex-start" onclick="nav('customers');setTimeout(()=>openOnboarding(),50)">✅ Onboard New Customer</button>
+          <button class="btn btn-outline" style="justify-content:flex-start" onclick="nav('dispatch')">🚗 Dispatch Field Tech</button>
+          <button class="btn btn-outline" style="justify-content:flex-start" onclick="nav('callcenter')">💬 Call Center / Messaging</button>
+          <button class="btn btn-gold" style="justify-content:flex-start" onclick="nav('customers')">👥 View All Customers</button>
+          <button class="btn btn-outline" style="justify-content:flex-start" onclick="APP.modal={type:'massAdd'};renderApp()">⬆️ Mass Add Customers</button>
+          <button class="btn btn-outline" style="justify-content:flex-start" onclick="exportCSV()">📤 Export CSV</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// CUSTOMERS
+// ============================================================
+function renderCustomers(){
+  if(APP.selectedCustomer){
+    const c=customers.find(x=>x.id===APP.selectedCustomer);
+    if(c) return renderCustomerDetail(c);
+  }
+  const filtered=customers.filter(c=>{
+    const q=APP.search.toLowerCase();
+    const matchQ=!q||c.name.toLowerCase().includes(q)||c.phone.includes(q)||(c.username||'').toLowerCase().includes(q);
+    const matchS=APP.filterStatus==='all'||c.status===APP.filterStatus;
+    return matchQ&&matchS;
+  });
+  return`<div class="page">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:10px">
+      <div class="section-title">👥 Customer Overview</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="exportCSV()">📤 Export</button>
+        <button class="btn btn-outline btn-sm" onclick="APP.modal={type:'massAdd'};renderApp()">⬆️ Mass Add</button>
+        <button class="btn btn-primary btn-sm" onclick="openAddCustomer()">+ Add Customer</button>
+      </div>
+    </div>
+    <div class="section-sub">${customers.length} total · ${customers.filter(c=>c.status==='active').length} active</div>
+    <div class="search-bar">
+      <input class="search-input" placeholder="Search name, phone, username…" value="${APP.search}" oninput="APP.search=this.value;renderApp()" style="max-width:340px">
+      <select class="form-select" style="width:140px" onchange="APP.filterStatus=this.value;renderApp()">
+        <option value="all" ${APP.filterStatus==='all'?'selected':''}>All Status</option>
+        <option value="active" ${APP.filterStatus==='active'?'selected':''}>Active</option>
+        <option value="due" ${APP.filterStatus==='due'?'selected':''}>Due Soon</option>
+        <option value="overdue" ${APP.filterStatus==='overdue'?'selected':''}>Overdue</option>
+        <option value="suspended" ${APP.filterStatus==='suspended'?'selected':''}>Suspended</option>
+      </select>
+      <span style="font-size:12px;color:var(--muted);padding:9px 0">${filtered.length} shown</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Customer</th><th>Phone</th><th>Username</th><th>Device</th><th>Plan</th><th>Expires</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${filtered.map(c=>{
+            const d=daysUntil(c.expiry);
+            return`<tr>
+              <td style="color:var(--muted);font-size:11px">${c.id}</td>
+              <td style="cursor:pointer" onclick="APP.selectedCustomer=${c.id};renderApp()">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div class="avatar" style="background:${avatarColor(c.name)};width:28px;height:28px;font-size:10px">${getInitials(c.name)}</div>
+                  <div style="font-weight:600;font-size:12px">${c.name}</div>
+                </div>
+              </td>
+              <td style="font-size:11px;color:var(--muted)">${fmtPhone(c.phone)}</td>
+              <td style="font-family:monospace;font-size:11px;color:var(--gold)">${c.username||'—'}</td>
+              <td style="font-size:11px;color:var(--muted)">${c.device}</td>
+              <td><span style="font-size:10px;background:rgba(249,178,51,.1);color:var(--gold);padding:2px 7px;border-radius:5px;font-weight:600">${c.plan}</span></td>
+              <td style="font-size:11px;color:${d<0?'var(--danger)':d<14?'var(--warn)':'var(--muted)'}">${fmtDate(c.expiry)}<br><span style="font-size:10px">${d===null?'':d<0?Math.abs(d)+'d overdue':d+'d left'}</span></td>
+              <td>${statusBadge(c.status)}</td>
+              <td>
+                <div style="display:flex;gap:4px;flex-wrap:wrap">
+                  <button class="btn btn-outline btn-xs" onclick="APP.selectedCustomer=${c.id};renderApp()">View</button>
+                  <button class="btn btn-outline btn-xs" onclick="APP.modal={type:'sms',customerId:${c.id}};renderApp()">Text</button>
+                  ${c.status!=='active'?`<button class="btn btn-success btn-xs" onclick="reactivate(${c.id})">Paid</button>`:''}
+                </div>
+              </td>
+            </tr>`;
+          }).join('')}
+          ${filtered.length===0?'<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:28px">No customers found</td></tr>':''}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function renderCustomerDetail(c){
+  const d=daysUntil(c.expiry);
+  return`<div class="page">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" onclick="APP.selectedCustomer=null;renderApp()">← Back</button>
+      <div style="display:flex;align-items:center;gap:11px">
+        <div class="avatar" style="background:${avatarColor(c.name)};width:44px;height:44px;font-size:16px">${getInitials(c.name)}</div>
+        <div><div style="font-size:18px;font-weight:700">${c.name}</div><div style="color:var(--muted);font-size:12px">${fmtPhone(c.phone)}</div></div>
+      </div>
+      ${statusBadge(c.status)}
+      <div style="margin-left:auto;display:flex;gap:7px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="APP.modal={type:'sms',customerId:${c.id}};renderApp()">💬 Text</button>
+        <button class="btn btn-outline btn-sm" onclick="APP.modal={type:'call',customerId:${c.id}};renderApp()">📞 Script</button>
+        <button class="btn btn-primary btn-sm" onclick="APP.modal={type:'editCustomer',customerId:${c.id}};renderApp()">✏️ Edit</button>
+      </div>
+    </div>
+    <div class="grid3">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px">Account Info</div>
+        ${[['Device',c.device],['Plan',c.plan],['Expires',fmtDate(c.expiry)],['Days Left',d===null?'—':d<0?Math.abs(d)+' days overdue':d+' days'],].map(([l,v])=>`
+          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+            <div style="color:var(--muted);font-size:12px">${l}</div><div style="font-size:12px;font-weight:600">${v}</div>
+          </div>`).join('')}
+        <div style="margin-top:11px;display:flex;flex-direction:column;gap:7px">
+          ${c.status!=='active'?`<button class="btn btn-success btn-sm" style="justify-content:center" onclick="reactivate(${c.id})">✅ Mark Payment Received</button>`:''}
+          <button class="btn btn-danger btn-sm" style="justify-content:center" onclick="suspendCustomer(${c.id})">⛔ Suspend Account</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px">Login Credentials</div>
+        <div class="credential-box" style="margin-bottom:9px">
+          <div class="cred-label">Username</div>
+          <div class="cred-value">${c.username||genUsername(c.name,c.phone)}</div>
+        </div>
+        <div class="credential-box" style="margin-bottom:9px">
+          <div class="cred-label">Password (phone #)</div>
+          <div class="cred-value">${genPassword(c.phone)}</div>
+        </div>
+        <div class="credential-box" style="margin-bottom:12px">
+          <div class="cred-label">Server URL</div>
+          <div class="cred-value" style="font-size:12px">popstv.stream:8080</div>
+        </div>
+        <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center" onclick="resendCreds(${c.id})">📲 Resend via Text</button>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px">Notes & Dispatch</div>
+        <div style="background:var(--bg3);border-radius:8px;padding:10px;min-height:60px;font-size:12px;color:${c.notes?'var(--white)':'var(--muted)'}">${c.notes||'No notes. Click Edit to add.'}</div>
+        <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center;margin-top:8px" onclick="APP.modal={type:'editCustomer',customerId:${c.id}};renderApp()">Edit / Add Note</button>
+        <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
+          <button class="btn btn-info btn-sm" style="width:100%;justify-content:center" onclick="APP.modal={type:'dispatch',customerId:${c.id}};renderApp()">🚗 Schedule Field Tech</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// CALL CENTER
+// ============================================================
+function renderCallCenter(){
+  const tabs=[{id:'templates',l:'SMS Templates'},{id:'voice',l:'Voice Scripts'},{id:'bulk',l:'Bulk Outreach'},{id:'compose',l:'Compose Message'}];
+  let body='';
+  if(APP.smsTab==='templates'){
+    body=`<div class="grid2">
+      ${SMS_TEMPLATES.map((t,i)=>`<div class="sms-card">
+        <div class="sms-type">${t.type}</div>
+        <div class="sms-body">${t.body}</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">
+          <button class="btn btn-outline btn-sm" onclick="showNotif('SMS queued for relevant group')">📨 Send to Group</button>
+          <button class="btn btn-outline btn-sm" onclick="navigator.clipboard?.writeText(SMS_TEMPLATES[${i}].body).catch(()=>{});showNotif('Copied!','info')">📋 Copy</button>
+        </div>
+      </div>`).join('')}
+    </div>`;
+  } else if(APP.smsTab==='voice'){
+    body=`<div class="grid2">
+      ${VOICE_SCRIPTS.map((v,i)=>`<div class="sms-card">
+        <div class="sms-type">📞 ${v.type}</div>
+        <div class="sms-body">${v.script}</div>
+        <button class="btn btn-outline btn-sm" onclick="navigator.clipboard?.writeText(VOICE_SCRIPTS[${i}].script).catch(()=>{});showNotif('Script copied','info')">📋 Copy Script</button>
+      </div>`).join('')}
+    </div>`;
+  } else if(APP.smsTab==='bulk'){
+    const groups=[
+      {label:'Overdue ('+customers.filter(c=>c.status==='overdue').length+')',filter:'overdue',color:'var(--danger)',msg:'Send overdue notice'},
+      {label:'Due in 7 Days ('+customers.filter(c=>{const d=daysUntil(c.expiry);return d!==null&&d>=0&&d<=7}).length+')',filter:'7days',color:'var(--warn)',msg:'Send 7-day reminder'},
+      {label:'Due in 30 Days ('+customers.filter(c=>{const d=daysUntil(c.expiry);return d!==null&&d>7&&d<=30}).length+')',filter:'30days',color:'var(--gold)',msg:'Monthly reminder'},
+      {label:'All Active ('+customers.filter(c=>c.status==='active').length+')',filter:'active',color:'var(--success)',msg:'Announcement to active customers'},
+      {label:'All Customers ('+customers.length+')',filter:'all',color:'var(--info)',msg:'Blast to everyone'},
+    ];
+    body=`<div style="display:flex;flex-direction:column;gap:11px">
+      ${groups.map(g=>`<div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:${g.color};margin-bottom:3px">${g.label}</div>
+          <div style="font-size:12px;color:var(--muted)">${g.msg}</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0">
+          <button class="btn btn-outline btn-sm" onclick="showNotif('SMS queued for group')">💬 SMS</button>
+          <button class="btn btn-outline btn-sm" onclick="showNotif('Voice calls queued','info')">📞 Voice</button>
+        </div>
+      </div>`).join('')}
+    </div>`;
+  } else if(APP.smsTab==='compose'){
+    body=`<div class="card" style="max-width:580px">
+      <div class="form-group"><label class="form-label">Send To</label>
+        <select class="form-select">
+          <option>All Active (${customers.filter(c=>c.status==='active').length})</option>
+          <option>All Overdue (${customers.filter(c=>c.status==='overdue').length})</option>
+          <option>All Due Soon (${customers.filter(c=>c.status==='due').length})</option>
+          <option>Everyone (${customers.length})</option>
+          ${customers.map(c=>`<option>${c.name} — ${fmtPhone(c.phone)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Load Template</label>
+        <select class="form-select" onchange="if(this.value){document.getElementById('compose-body').value=SMS_TEMPLATES[this.value].body}">
+          <option value="">— Custom Message —</option>
+          ${SMS_TEMPLATES.map((t,i)=>`<option value="${i}">${t.type}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Message</label>
+        <textarea class="form-textarea" id="compose-body" rows="5" placeholder="Type your message... [NAME] [DATE] [USERNAME] are placeholders">Your Pop's TV subscription expires on [DATE]. Please send payment to avoid interruption.\n\nCash App: $PopsTVStream\nReply HELP for support.</textarea>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="showNotif('Message sent!')">📨 Send Message</button>
+    </div>`;
+  }
+  return`<div class="page">
+    <div class="section-title">📞 Call Center</div>
+    <div class="section-sub">SMS templates, voice scripts, and outreach tools</div>
+    <div class="tabs">${tabs.map(t=>`<div class="tab${APP.smsTab===t.id?' active':''}" onclick="APP.smsTab='${t.id}';renderApp()">${t.l}</div>`).join('')}</div>
+    ${body}
+  </div>`;
+}
+
+// ============================================================
+// DISPATCH & FIELD
+// ============================================================
+function renderDispatch(){
+  const dtabs=[{id:'orders',l:'Service Orders'},{id:'techs',l:'Field Techs'},{id:'inventory',l:'Device Inventory'},{id:'neworder',l:'+ New Order'}];
+  let body='';
+  if(APP.dispatchTab==='orders'){
+    const statusColor={pending:'var(--warn)',assigned:'var(--info)',completed:'var(--success)',cancelled:'var(--danger)'};
+    body=`<div style="display:flex;flex-direction:column;gap:11px">
+      ${DISPATCH_ORDERS.map((o,i)=>`<div class="dispatch-card ${o.status}">
+        <div style="font-size:22px;flex-shrink:0">🚗</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">
+            <div style="font-size:14px;font-weight:700">${o.customer}</div>
+            <span style="font-size:10px;background:rgba(255,255,255,.06);padding:2px 8px;border-radius:20px;color:${statusColor[o.status]||'var(--muted)'}">● ${o.status.toUpperCase()}</span>
+            <span style="font-size:11px;color:var(--gold)">${o.type}</span>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:2px">📱 ${fmtPhone(o.phone)} · 📍 ${o.address}</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:2px">📦 ${o.device} · 🕐 ${o.scheduled}</div>
+          <div style="font-size:11px;color:var(--muted)">👤 Tech: ${o.tech||'<span style="color:var(--warn)">Unassigned</span>'}</div>
+          ${o.notes?`<div style="font-size:11px;color:var(--muted);margin-top:4px;background:var(--bg3);padding:6px;border-radius:5px">${o.notes}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">
+          ${o.status==='pending'?`<button class="btn btn-info btn-sm" onclick="DISPATCH_ORDERS[${i}].status='assigned';DISPATCH_ORDERS[${i}].tech=FIELD_TECHS[0].name;showNotif('Tech assigned!','info');renderApp()">Assign Tech</button>`:''}
+          ${o.status==='assigned'?`<button class="btn btn-success btn-sm" onclick="DISPATCH_ORDERS[${i}].status='completed';showNotif('✅ Order complete!');renderApp()">✅ Complete</button>`:''}
+          <button class="btn btn-outline btn-sm" onclick="showNotif('Text queued to ${o.customer}','info')">📱 Text</button>
+        </div>
+      </div>`).join('')}
+    </div>`;
+  } else if(APP.dispatchTab==='techs'){
+    body=`<div style="display:flex;flex-direction:column;gap:11px">
+      ${FIELD_TECHS.map(t=>`<div class="card" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div class="avatar" style="background:${avatarColor(t.name)};width:42px;height:42px;font-size:15px">${getInitials(t.name)}</div>
+        <div style="flex:1;min-width:180px">
+          <div style="font-size:14px;font-weight:700">${t.name}</div>
+          <div style="font-size:12px;color:var(--muted)">${fmtPhone(t.phone)}</div>
+          <div style="margin-top:5px;display:flex;gap:7px;flex-wrap:wrap">
+            <span style="font-size:11px;background:rgba(255,255,255,.06);padding:2px 8px;border-radius:5px">Active: ${t.active}</span>
+            <span style="font-size:11px;background:rgba(16,217,126,.1);color:var(--success);padding:2px 8px;border-radius:5px">Done: ${t.completed}</span>
+            <span style="font-size:11px;padding:2px 8px;border-radius:5px;background:${t.status==='available'?'rgba(16,217,126,.1)':t.status==='on-route'?'rgba(0,212,255,.1)':'rgba(119,119,170,.1)'};color:${t.status==='available'?'var(--success)':t.status==='on-route'?'var(--info)':'var(--muted)'}">${t.status}</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:7px">
+          <button class="btn btn-outline btn-sm">📱 Text</button>
+          <button class="btn btn-info btn-sm">Assign Order</button>
+        </div>
+      </div>`).join('')}
+      <button class="btn btn-primary btn-sm">+ Add Field Tech</button>
+    </div>`;
+  } else if(APP.dispatchTab==='inventory'){
+    body=`<div class="grid2">
+      ${ORDER_ITEMS.map(item=>`<div class="card">
+        <div style="display:flex;align-items:flex-start;gap:13px">
+          <div style="font-size:34px">${item.img}</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;margin-bottom:3px">${item.name}</div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:7px">SKU: ${item.sku}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
+              <div>
+                <span style="font-size:18px;font-weight:900;color:var(--gold)">$${item.price.toFixed(2)}</span>
+                <span style="font-size:11px;color:${item.stock<5?'var(--danger)':'var(--success)'};margin-left:8px">${item.stock} in stock</span>
+              </div>
+              <div style="display:flex;gap:7px">
+                <button class="btn btn-outline btn-sm" onclick="APP.modal={type:'editPrice',item:'${item.id}'};renderApp()">✏️ Edit Price</button>
+                <button class="btn btn-primary btn-sm" onclick="showNotif('Added to next order','info')">Add to Order</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`).join('')}
+    </div>`;
+  } else if(APP.dispatchTab==='neworder'){
+    body=`<div class="card" style="max-width:580px">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Customer</label>
+          <select class="form-select" id="d-customer">
+            <option value="">Select customer…</option>
+            ${customers.map(c=>`<option value="${c.id}">${c.name} — ${fmtPhone(c.phone)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Order Type</label>
+          <select class="form-select" id="d-type">
+            <option>New Install</option><option>Setup Help</option><option>Device Delivery</option><option>Troubleshooting</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Device / Item</label>
+          <select class="form-select" id="d-device">
+            <option>ONN 4K Stick</option><option>ONN HD Stick</option><option>Firestick (customer's)</option><option>Setup Only</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Assign Tech</label>
+          <select class="form-select" id="d-tech">
+            <option value="">Unassigned</option>
+            ${FIELD_TECHS.map(t=>`<option>${t.name}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Scheduled</label><input class="form-input" id="d-sched" type="datetime-local"></div>
+        <div class="form-group"><label class="form-label">Address</label><input class="form-input" id="d-addr" placeholder="Street, Buffalo NY"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="d-notes" rows="2" placeholder="Special instructions…"></textarea></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="createDispatchOrder()">🚗 Create Dispatch Order</button>
+    </div>`;
+  }
+  return`<div class="page">
+    <div class="section-title">🚗 Dispatch & Field Operations</div>
+    <div class="section-sub">Manage field techs, service orders, and device inventory</div>
+    <div class="tabs">${dtabs.map(t=>`<div class="tab${APP.dispatchTab===t.id?' active':''}" onclick="APP.dispatchTab='${t.id}';renderApp()">${t.l}</div>`).join('')}</div>
+    ${body}
+  </div>`;
+}
+
+// ============================================================
+// PORTAL CONNECTION (How-To + Portal Management)
+// ============================================================
+function renderPortalConnection(){
+  const htabs=[{id:'firestick',l:'🔥 Firestick'},{id:'onn',l:'📺 ONN Stick'},{id:'android',l:'📱 Android'}];
+  const guides = HOWTO_GUIDES[APP.howtoTab]||[];
+  return`<div class="page">
+    <div class="section-title">🔗 Portal Connection & How-To</div>
+    <div class="section-sub">Manage customer portal content, push updates, and access setup guides</div>
+
+    <div class="grid2" style="margin-bottom:20px">
+      <div class="card" style="border-color:rgba(0,212,255,.2)">
+        <div class="card-title" style="margin-bottom:13px">Customer Portal Links</div>
+        <div class="portal-link-card" onclick="showNotif('Opening customer portal…','info')">
+          <div style="font-size:24px">🏠</div>
+          <div><div style="font-weight:600;font-size:13px">Customer Portal Login</div><div style="font-size:11px;color:var(--muted)">View as customers see it — login via phone number</div></div>
+          <div style="margin-left:auto;font-size:18px;color:var(--cyan)">→</div>
+        </div>
+        <div class="portal-link-card" onclick="showNotif('Opening platform signup…','info')">
+          <div style="font-size:24px">🌐</div>
+          <div><div style="font-weight:600;font-size:13px">Public Platform / Signup</div><div style="font-size:11px;color:var(--muted)">View or edit the public-facing marketing site</div></div>
+          <div style="margin-left:auto;font-size:18px;color:var(--cyan)">→</div>
+        </div>
+        <div class="portal-link-card" onclick="APP.modal={type:'addPortalPhone'};renderApp()">
+          <div style="font-size:24px">➕</div>
+          <div><div style="font-weight:600;font-size:13px">Add Customer to Portal</div><div style="font-size:11px;color:var(--muted)">Grant portal access by phone number</div></div>
+          <div style="margin-left:auto;font-size:18px;color:var(--cyan)">→</div>
+        </div>
+      </div>
+
+      <div class="card" style="border-color:rgba(249,178,51,.2)">
+        <div class="card-title" style="margin-bottom:13px">Push Content / Updates</div>
+        <div class="form-group"><label class="form-label">Announcement / Banner</label>
+          <textarea class="form-textarea" rows="3" placeholder="Push a notice to the customer portal (e.g. maintenance window, new features)…"></textarea>
+        </div>
+        <div class="form-group"><label class="form-label">Tutorial to Highlight</label>
+          <select class="form-select">
+            <option>— None —</option>
+            ${guides.map(g=>`<option>${g.title}</option>`).join('')}
+          </select>
+        </div>
+        <button class="btn btn-gold btn-sm" style="width:100%;justify-content:center" onclick="showNotif('Portal updated!','info')">📡 Push Update to Portal</button>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-bottom:8px;font-size:16px">📖 How-To Guides (for customers)</div>
+    <div class="section-sub">Step-by-step setup guides — copy and send directly to customers via text</div>
+    <div class="tabs">${htabs.map(t=>`<div class="tab${APP.howtoTab===t.id?' active':''}" onclick="APP.howtoTab='${t.id}';renderApp()">${t.l}</div>`).join('')}</div>
+
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${guides.map((g,i)=>`<div class="howto-card" onclick="toggleGuide(${i})">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;gap:12px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="font-size:26px">${g.icon}</div>
+            <div>
+              <div style="font-size:13px;font-weight:700">${g.title}</div>
+              <div style="font-size:11px;color:var(--muted)">⏱ About ${g.time}</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+            <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();copyGuide(${i})">📋 Copy</button>
+            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();showNotif('Guide texted to customer','info')">📱 Text</button>
+            <span style="color:var(--gold);font-size:16px">${APP['guide_'+APP.howtoTab+'_'+i]?'▲':'▼'}</span>
+          </div>
+        </div>
+        ${APP['guide_'+APP.howtoTab+'_'+i]?`<div style="padding:0 16px 14px;border-top:1px solid var(--border)">
+          ${g.steps.map((s,si)=>`<div style="display:flex;gap:11px;margin-bottom:9px;margin-top:${si===0?'12px':'0'}">
+            <div style="width:22px;height:22px;border-radius:50%;background:var(--gold);color:#000;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${si+1}</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;padding-top:2px">${s}</div>
+          </div>`).join('')}
+        </div>`:''}
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// LOGINS MANAGER (admin only)
+// ============================================================
+function renderLogins(){
+  return`<div class="page">
+    <div class="section-title">🔐 Manage Logins</div>
+    <div class="section-sub">Add, remove, or modify staff access. Admin only.</div>
+
+    <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
+      <button class="btn btn-primary btn-sm" onclick="APP.modal={type:'addLogin'};renderApp()">+ Add Login</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Name</th><th>Username</th><th>Role</th><th>Access</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${OFFICE_USERS.map((u,i)=>`<tr>
+            <td style="color:var(--muted);font-size:11px">${u.id}</td>
+            <td style="font-weight:600;font-size:12px">${u.name}</td>
+            <td style="font-family:monospace;font-size:11px;color:var(--gold)">${u.username}</td>
+            <td><span style="font-size:10px;background:rgba(249,178,51,.1);color:var(--gold);padding:2px 8px;border-radius:20px;font-weight:700;text-transform:uppercase">${u.role}</span></td>
+            <td style="font-size:11px;color:var(--muted)">${ROLE_ACCESS[u.role].join(', ')}</td>
+            <td>
+              <div style="display:flex;gap:5px">
+                <button class="btn btn-outline btn-xs" onclick="APP.modal={type:'editLogin',userId:${u.id}};renderApp()">Edit</button>
+                ${u.id!==SESSION.id?`<button class="btn btn-danger btn-xs" onclick="removeLogin(${u.id})">Remove</button>`:'<span style="font-size:10px;color:var(--muted)">You</span>'}
+              </div>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="margin-top:20px;border-color:rgba(249,178,51,.15)">
+      <div class="card-title" style="margin-bottom:12px">Role Permissions</div>
+      <div class="grid4">
+        ${Object.entries(ROLE_ACCESS).map(([role,tabs])=>`<div style="background:var(--bg3);border-radius:10px;padding:13px">
+          <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;margin-bottom:8px">${role}</div>
+          ${tabs.map(t=>`<div style="font-size:11px;color:var(--muted);padding:3px 0">✓ ${t}</div>`).join('')}
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+function renderModal(){
+  const m=APP.modal;
+  let title='',body='';
+  
+  if(m.type==='sms'){
+    const c=customers.find(x=>x.id===m.customerId);
+    title=`💬 Text — ${c?c.name:'Customer'}`;
+    body=`<div>
+      <div style="background:var(--bg3);padding:10px;border-radius:8px;margin-bottom:13px;font-size:12px;color:var(--muted)">
+        To: <strong style="color:var(--white)">${c?fmtPhone(c.phone):'—'}</strong>
+      </div>
+      <div class="form-group"><label class="form-label">Template</label>
+        <select class="form-select" onchange="if(this.value!=''){const t=SMS_TEMPLATES[parseInt(this.value)];let msg=t.body;const c=customers.find(x=>x.id===${m.customerId});if(c){msg=msg.replace(/\\[DATE\\]/g,fmtDate(c.expiry)).replace(/\\[USERNAME\\]/g,c.username||'').replace(/\\[PASSWORD\\]/g,genPassword(c.phone)).replace(/\\[NAME\\]/g,c.name);}document.getElementById('sms-body').value=msg;}">
+          <option value="">— Custom —</option>
+          ${SMS_TEMPLATES.map((t,i)=>`<option value="${i}">${t.type}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Message</label>
+        <textarea class="form-textarea" id="sms-body" rows="5">${c?SMS_TEMPLATES[1].body.replace(/\[DATE\]/g,fmtDate(c.expiry)).replace(/\[USERNAME\]/g,c.username||'').replace(/\[PASSWORD\]/g,genPassword(c.phone)):''}</textarea>
+      </div>
+    </div>`;
+  } else if(m.type==='call'){
+    const c=customers.find(x=>x.id===m.customerId);
+    title=`📞 Call Script — ${c?c.name:'Customer'}`;
+    body=`<div>
+      <div style="background:var(--bg3);padding:10px;border-radius:8px;margin-bottom:13px;font-size:12px;color:var(--muted)">Calling: <strong style="color:var(--white)">${c?fmtPhone(c.phone):'—'}</strong></div>
+      <div class="form-group"><label class="form-label">Script</label>
+        <select class="form-select" onchange="const s=VOICE_SCRIPTS[parseInt(this.value)];const el=document.getElementById('call-prev');if(el&&s){const c=customers.find(x=>x.id===${m.customerId});let sc=s.script;if(c)sc=sc.replace(/\\[DATE\\]/g,fmtDate(c.expiry));el.textContent=sc;}">
+          ${VOICE_SCRIPTS.map((s,i)=>`<option value="${i}">${s.type}</option>`).join('')}
+        </select>
+      </div>
+      <div id="call-prev" style="background:var(--bg3);border-left:3px solid var(--gold);padding:12px;border-radius:0 8px 8px 0;font-size:12px;color:var(--muted);line-height:1.7;margin-top:10px">
+        ${c?VOICE_SCRIPTS[0].script.replace(/\[DATE\]/g,fmtDate(c.expiry)):VOICE_SCRIPTS[0].script}
+      </div>
+    </div>`;
+  } else if(m.type==='addCustomer'||m.type==='editCustomer'){
+    const c=m.type==='editCustomer'?customers.find(x=>x.id===m.customerId):null;
+    title=c?`✏️ Edit — ${c.name}`:'+ Add Customer';
+    body=`<div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Name *</label><input class="form-input" id="m-name" value="${c?c.name:''}"></div>
+        <div class="form-group"><label class="form-label">Phone *</label><input class="form-input" id="m-phone" value="${c?c.phone:''}" placeholder="7165550000"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="m-user" value="${c?(c.username||''):''}"></div>
+        <div class="form-group"><label class="form-label">Device</label>
+          <select class="form-select" id="m-device">${['ONN 4K Stick','ONN HD Stick','Firestick','Smart TV','Android TV','Android Phone'].map(d=>`<option ${c&&c.device===d?'selected':''}>${d}</option>`).join('')}</select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Plan</label>
+          <select class="form-select" id="m-plan">${PLANS.map(p=>`<option ${c&&c.plan===p.name?'selected':''}>${p.name}</option>`).join('')}</select>
+        </div>
+        <div class="form-group"><label class="form-label">Expiry Date</label><input class="form-input" id="m-due" type="date" value="${c?c.expiry:''}"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-select" id="m-status">${['active','due','overdue','suspended'].map(s=>`<option value="${s}" ${c&&c.status===s?'selected':''}>${s}</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="m-notes" rows="2">${c?c.notes:''}</textarea></div>
+    </div>`;
+  } else if(m.type==='massAdd'){
+    title='⬆️ Mass Add Customers';
+    body=`<div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6">
+        Paste customer data below — one per line. Format:<br>
+        <code style="background:var(--bg3);padding:3px 7px;border-radius:4px;font-size:12px">Name, Phone, Plan, ExpiryDate</code>
+      </div>
+      <div class="form-group">
+        <textarea class="form-textarea" id="mass-input" rows="8" placeholder="John Smith, 7165551234, Monthly, 2026-06-01&#10;Jane Doe, 7165555678, Quarterly, 2026-09-01"></textarea>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Or upload a CSV file:</div>
+      <input type="file" accept=".csv" style="font-size:12px;color:var(--muted)">
+    </div>`;
+  } else if(m.type==='dispatch'){
+    const c=customers.find(x=>x.id===m.customerId);
+    title=`🚗 Schedule Field Tech — ${c?c.name:'Customer'}`;
+    body=`<div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Order Type</label>
+          <select class="form-select" id="d-type2"><option>New Install</option><option>Setup Help</option><option>Device Delivery</option><option>Troubleshooting</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Assign Tech</label>
+          <select class="form-select" id="d-tech2">
+            <option>Unassigned</option>${FIELD_TECHS.map(t=>`<option>${t.name}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Schedule</label><input class="form-input" id="d-sched2" type="datetime-local"></div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="d-notes2" rows="2"></textarea></div>
+    </div>`;
+  } else if(m.type==='addLogin'||m.type==='editLogin'){
+    const u=m.type==='editLogin'?OFFICE_USERS.find(x=>x.id===m.userId):null;
+    title=u?`✏️ Edit Login — ${u.name}`:'+ Add Login';
+    body=`<div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="lu-name" value="${u?u.name:''}"></div>
+        <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="lu-user" value="${u?u.username:''}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Password</label><input class="form-input" id="lu-pass" type="password" placeholder="${u?'Leave blank to keep current':'New password'}"></div>
+        <div class="form-group"><label class="form-label">Role</label>
+          <select class="form-select" id="lu-role">
+            ${['admin','finance','field','programmer'].map(r=>`<option value="${r}" ${u&&u.role===r?'selected':''}>${r.charAt(0).toUpperCase()+r.slice(1)}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+    </div>`;
+  } else if(m.type==='manageLogins'){
+    APP.page='logins';
+    APP.modal=null;
+    renderApp();
+    return '';
+  } else if(m.type==='addPortalPhone'){
+    title='➕ Add Customer to Portal';
+    body=`<div>
+      <div class="form-group"><label class="form-label">Customer Phone Number</label>
+        <input class="form-input" id="pp-phone" placeholder="(716) 555-0000" style="text-align:center;letter-spacing:2px;font-size:16px">
+      </div>
+      <div class="form-group"><label class="form-label">Link to Customer Account</label>
+        <select class="form-select" id="pp-cust">
+          <option value="">— Select customer —</option>
+          ${customers.map(c=>`<option value="${c.id}">${c.name} — ${fmtPhone(c.phone)}</option>`).join('')}
+        </select>
+      </div>
+      <div style="background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.2);border-radius:8px;padding:10px;font-size:12px;color:var(--muted);margin-top:10px">
+        This will allow the customer to log into the portal using their phone number to view their account, tutorials, support, and renewals.
+      </div>
+    </div>`;
+  } else if(m.type==='editPrice'){
+    const item=ORDER_ITEMS.find(x=>x.id===m.item);
+    title=`✏️ Update Price — ${item?item.name:'Item'}`;
+    body=`<div>
+      <div class="form-group"><label class="form-label">Current Price</label>
+        <div style="font-size:24px;font-weight:700;color:var(--gold);margin-bottom:10px">$${item?item.price.toFixed(2):'—'}</div>
+      </div>
+      <div class="form-group"><label class="form-label">New Price ($)</label>
+        <input class="form-input" id="ep-price" type="number" step="0.01" value="${item?item.price.toFixed(2):''}" style="font-size:16px">
+      </div>
+      <div class="form-group"><label class="form-label">Update Stock Count</label>
+        <input class="form-input" id="ep-stock" type="number" value="${item?item.stock:0}">
+      </div>
+    </div>`;
+  }
+
+  return`<div class="modal-backdrop" onclick="if(event.target.className==='modal-backdrop'){APP.modal=null;renderApp()}">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">${title}</div>
+        <button class="close-btn" onclick="APP.modal=null;renderApp()">×</button>
+      </div>
+      <div class="modal-body">${body}</div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="APP.modal=null;renderApp()">Cancel</button>
+        <button class="btn btn-primary" onclick="modalConfirm()">
+          ${m.type==='sms'?'📨 Send':m.type==='call'?'📋 Copy Script':m.type==='addCustomer'?'Add Customer':m.type==='editCustomer'?'Save':m.type==='massAdd'?'Import Customers':m.type==='dispatch'?'Create Order':m.type==='addLogin'||m.type==='editLogin'?'Save Login':m.type==='addPortalPhone'?'Grant Access':m.type==='editPrice'?'Update':'Confirm'}
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// ACTIONS
+// ============================================================
+function nav(page){APP.page=page;APP.modal=null;APP.selectedCustomer=null;renderApp()}
+function openAddCustomer(){APP.modal={type:'addCustomer'};renderApp()}
+function openOnboarding(){APP.modal={type:'addCustomer'};renderApp()}
+
+function reactivate(id){
+  const idx=customers.findIndex(c=>c.id===id);
+  if(idx>=0){
+    customers[idx].status='active';
+    const days={Monthly:30,Quarterly:90,'6-Month':180,Annual:365}[customers[idx].plan]||30;
+    customers[idx].expiry=addDays(days);
+    showNotif(`✓ ${customers[idx].name} reactivated!`);renderApp();
+  }
+}
+
+function suspendCustomer(id){
+  const idx=customers.findIndex(c=>c.id===id);
+  if(idx>=0){customers[idx].status='suspended';showNotif('Account suspended','error');renderApp();}
+}
+
+function resendCreds(id){
+  const c=customers.find(x=>x.id===id);
+  if(!c)return;
+  const ph=c.phone.replace(/[^0-9]/g,'');
+  const msg="Pop's TV Login\nUsername: "+c.username+"\nPassword: "+c.phone.replace(/\D/g,'')+"\nApp: IPTV Smarters Pro\nServer: popstv.stream:8080";
+  if(ph){window.open('sms:'+ph+'?body='+encodeURIComponent(msg));}
+  showNotif('📲 Credentials ready to send!','info');
+}
+
+function exportCSV(){
+  const rows=customers.map(c=>[c.id,c.username,c.phone,c.plan,c.expiry,c.status,c.device].join(','));
+  const csv=['ID,Username,Phone,Plan,Expiry,Status,Device',...rows].join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv,'+encodeURIComponent(csv);
+  a.download='pops_customers.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  showNotif('📤 CSV exported','info');
+}
+
+function toggleGuide(i){const k='guide_'+APP.howtoTab+'_'+i;APP[k]=!APP[k];renderApp()}
+
+function copyGuide(i){
+  const g=HOWTO_GUIDES[APP.howtoTab]?.[i];
+  if(g){const t=`${g.title}\n\n${g.steps.map((s,i)=>`${i+1}. ${s}`).join('\n')}`;navigator.clipboard?.writeText(t).catch(()=>{});showNotif('📋 Guide copied!','info')}
+}
+
+function removeLogin(id){
+  if(!confirm('Remove this login?'))return;
+  const idx=OFFICE_USERS.findIndex(u=>u.id===id);
+  if(idx>=0){OFFICE_USERS.splice(idx,1);showNotif('Login removed','info');renderApp();}
+}
+
+function createDispatchOrder(){
+  const custId=parseInt((document.getElementById('d-customer')||{}).value||'0');
+  const c=customers.find(x=>x.id===custId);
+  DISPATCH_ORDERS.push({
+    id:'D00'+(DISPATCH_ORDERS.length+1),
+    customer:c?c.name:'Customer',phone:c?c.phone:'',
+    address:(document.getElementById('d-addr')||{}).value||'Buffalo, NY',
+    type:(document.getElementById('d-type')||{}).value||'Service Call',
+    device:(document.getElementById('d-device')||{}).value||'',
+    tech:(document.getElementById('d-tech')||{}).value||'',
+    status:'pending',
+    scheduled:(document.getElementById('d-sched')||{}).value||'TBD',
+    notes:(document.getElementById('d-notes')||{}).value||'',
+  });
+  showNotif('🚗 Dispatch order created!');APP.dispatchTab='orders';renderApp();
+}
+
+function modalConfirm(){
+  const m=APP.modal;
+  if(m.type==='sms'){showNotif('✓ Text sent!');APP.modal=null;renderApp();}
+  else if(m.type==='call'){
+    const sc=(document.getElementById('call-prev')||{}).textContent||'';
+    navigator.clipboard?.writeText(sc).catch(()=>{});
+    showNotif('📋 Script copied!','info');APP.modal=null;renderApp();
+  }
+  else if(m.type==='addCustomer'){
+    const name=(document.getElementById('m-name')||{}).value||'';
+    const phone=(document.getElementById('m-phone')||{}).value||'';
+    if(!name){showNotif('Name required','error');return;}
+    const newId=Math.max(...customers.map(c=>c.id))+1;
+    customers.push({
+      id:newId,name,phone,
+      username:(document.getElementById('m-user')||{}).value||genUsername(name,phone),
+      device:(document.getElementById('m-device')||{}).value||'Firestick',
+      plan:(document.getElementById('m-plan')||{}).value||'Monthly',
+      expiry:(document.getElementById('m-due')||{}).value||addDays(30),
+      status:(document.getElementById('m-status')||{}).value||'active',
+      notes:(document.getElementById('m-notes')||{}).value||'',
+    });
+    showNotif(`✓ ${name} added!`);APP.modal=null;renderApp();
+  }
+  else if(m.type==='editCustomer'){
+    const idx=customers.findIndex(x=>x.id===m.customerId);
+    if(idx>=0){
+      const phone=(document.getElementById('m-phone')||{}).value||customers[idx].phone;
+      customers[idx]={...customers[idx],
+        name:(document.getElementById('m-name')||{}).value||customers[idx].name,
+        phone,
+        username:(document.getElementById('m-user')||{}).value||customers[idx].username,
+        device:(document.getElementById('m-device')||{}).value||customers[idx].device,
+        plan:(document.getElementById('m-plan')||{}).value||customers[idx].plan,
+        expiry:(document.getElementById('m-due')||{}).value||customers[idx].expiry,
+        status:(document.getElementById('m-status')||{}).value||customers[idx].status,
+        notes:(document.getElementById('m-notes')||{}).value||customers[idx].notes,
+      };
+      showNotif('✓ Customer updated!');APP.modal=null;renderApp();
+    }
+  }
+  else if(m.type==='massAdd'){
+    const lines=(document.getElementById('mass-input')||{}).value||'';
+    let added=0;
+    lines.split('\n').forEach(line=>{
+      const parts=line.split(',').map(x=>x.trim());
+      if(parts[0]&&parts[1]){
+        const newId=Math.max(...customers.map(c=>c.id))+1;
+        customers.push({id:newId,name:parts[0],phone:parts[1],username:genUsername(parts[0],parts[1]),plan:parts[2]||'Monthly',expiry:parts[3]||addDays(30),status:'active',device:'Firestick',notes:''});
+        added++;
+      }
+    });
+    showNotif(`✓ ${added} customers imported!`);APP.modal=null;renderApp();
+  }
+  else if(m.type==='dispatch'){
+    const c=customers.find(x=>x.id===m.customerId);
+    DISPATCH_ORDERS.push({
+      id:'D00'+(DISPATCH_ORDERS.length+1),customer:c?c.name:'Customer',phone:c?c.phone:'',address:'Buffalo, NY',
+      type:(document.getElementById('d-type2')||{}).value||'Service Call',device:'Firestick',
+      tech:(document.getElementById('d-tech2')||{}).value||'',status:'pending',
+      scheduled:(document.getElementById('d-sched2')||{}).value||'TBD',
+      notes:(document.getElementById('d-notes2')||{}).value||'',
+    });
+    showNotif('🚗 Dispatch order created!');APP.modal=null;APP.page='dispatch';renderApp();
+  }
+  else if(m.type==='addLogin'){
+    const name=(document.getElementById('lu-name')||{}).value||'';
+    const user=(document.getElementById('lu-user')||{}).value||'';
+    const pass=(document.getElementById('lu-pass')||{}).value||'';
+    const role=(document.getElementById('lu-role')||{}).value||'field';
+    if(!name||!user||!pass){showNotif('All fields required','error');return;}
+    const newId=Math.max(...OFFICE_USERS.map(u=>u.id))+1;
+    OFFICE_USERS.push({id:newId,username:user,password:pass,role,name});
+    showNotif(`✓ Login created for ${name}`);APP.modal=null;renderApp();
+  }
+  else if(m.type==='editLogin'){
+    const idx=OFFICE_USERS.findIndex(x=>x.id===m.userId);
+    if(idx>=0){
+      OFFICE_USERS[idx].name=(document.getElementById('lu-name')||{}).value||OFFICE_USERS[idx].name;
+      OFFICE_USERS[idx].username=(document.getElementById('lu-user')||{}).value||OFFICE_USERS[idx].username;
+      const newPass=(document.getElementById('lu-pass')||{}).value;
+      if(newPass)OFFICE_USERS[idx].password=newPass;
+      OFFICE_USERS[idx].role=(document.getElementById('lu-role')||{}).value||OFFICE_USERS[idx].role;
+      showNotif('✓ Login updated');APP.modal=null;renderApp();
+    }
+  }
+  else if(m.type==='addPortalPhone'){
+    const phone=(document.getElementById('pp-phone')||{}).value||'';
+    if(!phone){showNotif('Phone number required','error');return;}
+    showNotif('✓ Portal access granted for '+phone,'info');APP.modal=null;renderApp();
+  }
+  else if(m.type==='editPrice'){
+    const newPrice=parseFloat((document.getElementById('ep-price')||{}).value||'0');
+    const newStock=parseInt((document.getElementById('ep-stock')||{}).value||'0');
+    const item=ORDER_ITEMS.find(x=>x.id===m.item);
+    if(item){item.price=newPrice;item.stock=newStock;}
+    showNotif('✓ Inventory updated');APP.modal=null;renderApp();
+  }
+  else{APP.modal=null;renderApp();}
+}
+
+function attachListeners(){}
+</script>
+</body>
+</html>

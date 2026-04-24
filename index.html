@@ -79,6 +79,7 @@ body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;fo
 .email-status{padding:11px 15px;border-radius:9px;font-size:13px;margin-top:12px;display:none}
 .email-status.sending{display:block;background:rgba(59,130,246,.1);border:1px solid var(--info);color:var(--info)}
 .email-status.sent{display:block;background:rgba(16,217,126,.1);border:1px solid var(--success);color:var(--success)}
+.email-status.failed{display:block;background:rgba(255,45,78,.1);border:1px solid var(--danger);color:var(--danger)}
 .notif{position:fixed;top:20px;right:20px;background:var(--bg2);border:1px solid var(--success);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--success);z-index:999;animation:slideIn .3s ease;max-width:320px}
 @keyframes slideIn{from{transform:translateX(120%)}to{transform:translateX(0)}}
 .notif.error{border-color:var(--danger);color:var(--danger)}
@@ -91,6 +92,7 @@ body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;fo
 ::-webkit-scrollbar-track{background:var(--bg2)}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 <nav class="nav">
@@ -517,13 +519,105 @@ function saveStep2(){
   APP.onboardStep=3;renderPage();
 }
 
-function submitOrder(){
-  const el=document.getElementById('email-status');
+// ============================================================
+// EMAILJS CONFIG
+// 1. Create a FREE account at https://www.emailjs.com
+// 2. Add Gmail as a connected service (use popstvv000@gmail.com)
+// 3. Create ONE email template — the same template sends to both
+//    admin and customer by calling it twice with different to_email
+// 4. Fill in your 3 IDs below:
+// ============================================================
+const EMAILJS_PUBLIC_KEY   = 'xwCS5dBsx10-yibXz';    // Account → API Keys
+const EMAILJS_SERVICE_ID   = 'service_ru04mt9';    // Email Services → Service ID
+const EMAILJS_TEMPLATE_ID  = 'template_l819tee';   // Email Templates → Template ID
+const ADMIN_EMAIL          = 'popstvv000@gmail.com';
+
+// Required EmailJS template variables (set these in your template):
+//   {{to_email}}      — recipient address
+//   {{to_name}}       — recipient name
+//   {{customer_name}} — customer full name
+//   {{customer_phone}}— customer phone
+//   {{customer_email}}— customer email
+//   {{plan}}          — chosen plan
+//   {{device}}        — device type
+//   {{onn_stick}}     — Yes / No
+//   {{payment_method}}— payment method
+//   {{total}}         — total amount
+//   {{username}}      — generated username
+//   {{password}}      — generated password (phone digits)
+//   {{server_url}}    — popstv.stream:8080
+//   {{sent_to}}       — "you" or "admin" label for subject line
+
+async function submitOrder(){
+  const el = document.getElementById('email-status');
+
+  // Guard — must have customer email to send
+  if(!APP.newCustomer.email){
+    if(el){el.className='email-status failed';el.textContent='⚠️ Please go back and enter your email address.';}
+    return;
+  }
+
+  // Check config
+  if(EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY'){
+    // Dev mode — skip real send, just advance
+    if(el){el.className='email-status sending';el.textContent='⚙️ EmailJS not yet configured — skipping live send (dev mode)...';}
+    setTimeout(()=>{APP.onboardStep=5;renderPage();},1800);
+    return;
+  }
+
   if(el){el.className='email-status sending';el.textContent='📧 Sending confirmation emails...';}
-  setTimeout(()=>{
-    if(el){el.className='email-status sent';el.textContent='✅ Confirmation sent to '+(APP.newCustomer.email||'you')+' and to our team!';}
-    setTimeout(()=>{APP.onboardStep=5;renderPage();},1500);
-  },2000);
+
+  // Init EmailJS (safe to call multiple times)
+  emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
+
+  const planPrice={Monthly:25,Quarterly:65,'6-Month':120,Annual:220};
+  const base = planPrice[APP.newCustomer.plan]||25;
+  const stick = APP.newCustomer.needsStick ? 29.99 : 0;
+  const total = (base + stick).toFixed(2);
+  const username = genUsername(APP.newCustomer.name||'User', APP.newCustomer.phone||'0000');
+  const password = genPassword(APP.newCustomer.phone||'');
+
+  const sharedParams = {
+    customer_name:   APP.newCustomer.name    || '—',
+    customer_phone:  APP.newCustomer.phone   || '—',
+    customer_email:  APP.newCustomer.email   || '—',
+    plan:            APP.newCustomer.plan    || '—',
+    device:          APP.newCustomer.device  || 'Firestick',
+    onn_stick:       APP.newCustomer.needsStick ? 'Yes (+$29.99)' : 'No',
+    payment_method:  APP.newCustomer.payMethod || '—',
+    total:           '$' + total,
+    username:        username,
+    password:        password,
+    server_url:      'popstv.stream:8080',
+  };
+
+  try {
+    // Send email 1 — to customer
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      ...sharedParams,
+      to_email: APP.newCustomer.email,
+      to_name:  APP.newCustomer.name || 'Customer',
+      sent_to:  'customer',
+    });
+
+    // Send email 2 — to admin
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      ...sharedParams,
+      to_email: ADMIN_EMAIL,
+      to_name:  'Pop\'s TV Admin',
+      sent_to:  'admin',
+    });
+
+    if(el){el.className='email-status sent';el.textContent='✅ Confirmation sent to '+APP.newCustomer.email+' and to '+ADMIN_EMAIL+'!';}
+    setTimeout(()=>{APP.onboardStep=5;renderPage();},1800);
+
+  } catch(err){
+    console.error('EmailJS error:', err);
+    if(el){
+      el.className='email-status failed';
+      el.textContent='⚠️ Email failed to send — check EmailJS config. Error: '+(err.text||err.message||JSON.stringify(err));
+    }
+  }
 }
 renderPage();
 </script>
